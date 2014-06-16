@@ -14,9 +14,6 @@ import (
 )
 
 const (
-	// TheTVDB API key.
-	API_KEY = "DECE3B6B5464C552"
-
 	// URL used to get basic series information by name.
 	GET_SERIES_URL = "http://thetvdb.com/api/GetSeries.php?seriesname=%v"
 
@@ -139,9 +136,9 @@ func NewSeries(data []byte) (*Series, error) {
 }
 
 // Get more detail for all TV shows in a list.
-func (seriesList *SeriesList) GetDetail() (err error) {
+func (seriesList *SeriesList) GetDetail(apiKey string) (err error) {
 	for seriesIndex := range seriesList.Series {
-		if err = seriesList.Series[seriesIndex].GetDetail(); err != nil {
+		if err = seriesList.Series[seriesIndex].GetDetail(apiKey); err != nil {
 			return
 		}
 	}
@@ -150,8 +147,8 @@ func (seriesList *SeriesList) GetDetail() (err error) {
 }
 
 // Get more detail for a TV show, including information on it's episodes.
-func (series *Series) GetDetail() (err error) {
-	response, err := http.Get(fmt.Sprintf(GET_DETAIL_URL, API_KEY, strconv.FormatUint(series.Id, 10)))
+func (series *Series) GetDetail(apiKey string) (err error) {
+	response, err := http.Get(fmt.Sprintf(GET_DETAIL_URL, apiKey, strconv.FormatUint(series.Id, 10)))
 
 	if err != nil {
 		return
@@ -204,8 +201,8 @@ func GetSeries(name string) (seriesList SeriesList, err error) {
 }
 
 // Get a TV series by ID.
-func GetSeriesById(id uint64) (series Series, err error) {
-	response, err := http.Get(fmt.Sprintf(GET_SERIES_BY_ID_URL, API_KEY, id))
+func GetSeriesById(apiKey string, id uint64) (series Series, err error) {
+	response, err := http.Get(fmt.Sprintf(GET_SERIES_BY_ID_URL, apiKey, id))
 
 	if err != nil {
 		return
@@ -236,7 +233,7 @@ func GetSeriesById(id uint64) (series Series, err error) {
 
 // Search for TV shows by name, using the more sophisticated search on TheTVDB's homepage.
 // This is the recommended search method.
-func SearchSeries(name string, maxResults int) (seriesList SeriesList, err error) {
+func SearchSeries(apiKey, name string, maxResults int) (seriesList SeriesList, err error) {
 	response, err := http.Get(fmt.Sprintf(SEARCH_SERIES_URL, url.QueryEscape(name)))
 
 	if err != nil {
@@ -265,7 +262,7 @@ func SearchSeries(name string, maxResults int) (seriesList SeriesList, err error
 			return
 		}
 
-		series, err = GetSeriesById(seriesId)
+		series, err = GetSeriesById(apiKey, seriesId)
 
 		if err != nil {
 			// Some series can't be found, so we will ignore these.
